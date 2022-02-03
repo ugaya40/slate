@@ -1,0 +1,48 @@
+name: update forked-slate-react
+on: 
+  push:
+    tags:
+      - 'fv*'
+jobs:
+  all:
+    name: update forked-slate-react
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: setup node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+        cache: 'yarn'
+    - name: install and build
+      run: |
+        yarn install
+        yarn build
+    - name: archive
+      run: |
+        cd packages
+        tar -czf slate-react.tgz slate-react
+        mv slate-react.tgz ..
+        cd ..
+    - name: create release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: upload release
+      uses: actions/upload-release-asset@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: slate-react.tgz
+        asset_name: slate-react.tgz
+        asset_content_type: application/x-tar
+
+
